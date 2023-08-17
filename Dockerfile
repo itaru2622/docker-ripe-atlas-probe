@@ -1,6 +1,8 @@
 # cf. https://github.com/Jamesits/docker-ripe-atlas/
 
-FROM debian:bullseye as builder
+ARG base=debian:bullseye
+FROM ${base} as builder
+ARG base
 
 WORKDIR /opt
 RUN apt update ; apt install -y git tar fakeroot libssl-dev libcap2-bin autoconf automake libtool build-essential; \
@@ -8,7 +10,9 @@ RUN apt update ; apt install -y git tar fakeroot libssl-dev libcap2-bin autoconf
 RUN ./ripe-atlas-software-probe/build-config/debian/bin/make-deb
      
 
-FROM debian:bullseye
+ARG base=debian:bullseye
+FROM ${base}
+ARG base
 
 RUN apt update; \
     apt install -y libcap2-bin iproute2 openssh-client procps net-tools dnsutils screen
@@ -17,13 +21,14 @@ COPY --from=builder /opt/atlasswprobe-*.deb /opt
 
 ARG uid=1000
 ARG passwd=myatlas
-RUN groupadd --force --system --gid ${uid} atlas ; adduser --system --uid ${uid} --gid ${uid} atlas; \
-    echo "atlas:${passwd}" | chpasswd; \
+ARG uname=atlas
+RUN groupadd --force --system --gid ${uid} ${uname} ; adduser --system --uid ${uid} --gid ${uid} --home /home/${uname} ${uname}; \
+    echo "${uname}:${passwd}" | chpasswd; \
     ln -s /bin/true /bin/systemctl; \
     apt install -y /opt/atlasswprobe-*.deb; \
     ln -s /usr/local/atlas/bin/ATLAS /usr/local/bin/atlas; \
     mkdir -p /var/atlasdata; chmod 755 /var/atlasdata; \
-    chown -R atlas:atlas /var/atlas-probe /var/atlasdata || true
+    chown -R ${uname}:${uname} /home/${uname} /var/atlas-probe /var/atlasdata || true
 
 RUN echo "CHECK_ATLASDATA_TMPFS=no" > /var/atlas-probe/state/config.txt
 
