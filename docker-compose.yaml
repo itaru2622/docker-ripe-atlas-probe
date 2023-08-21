@@ -1,0 +1,23 @@
+services:
+  ripe-atlas:
+    image: itaru2622/ripe-atlas-probe:bookworm
+    restart: always
+#   environment:
+#     RXTXRPT: "yes"
+    volumes:
+      - ./etc:/var/atlas-probe/etc
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+      - NET_RAW
+    logging:
+      driver: json-file
+      options:
+         max-size: 10m
+    # network_mode: "host" # if possible, avoid double NAT
+    # security_opt:
+    #   - seccomp:unconfined
